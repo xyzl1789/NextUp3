@@ -655,13 +655,18 @@ static Class NUFlipArtworkClass(void) {
     // animation.
     // _itemArtwork == nil is implied by the early return above: same track, artwork late.
     BOOL fromPlaceholder = (artwork != nil && sameTitle && sameSubtitle);
+    // The manager retains the existing UIImage when the provider sends byte-identical
+    // artwork. A new track with that same image (normally the next song on an album)
+    // changes the labels without rotating an unchanged cover.
+    BOOL sameArtwork = (_itemArtwork != nil && _itemArtwork == artwork);
     _itemArtwork = artwork;
     // Nothing animates where nothing can see it: the incoming card sits hidden at rest
     // and the Control Center row parks at alpha 0, not hidden.
     BOOL visible = self.window && !self.hidden && self.alpha > 0.0;
     // In the island the cover flips instead. A late image for the same track has no
     // cover to flip away from and takes the crossfade below.
-    if ([self nu_applyFlipArtwork:artwork animated:(flip && visible && !fromPlaceholder)]) return;
+    if ([self nu_applyFlipArtwork:artwork
+                         animated:(flip && visible && !fromPlaceholder && !sameArtwork)]) return;
     if (artwork) {
         void (^applyArtwork)(void) = ^{
             self.artworkView.image = artwork;
